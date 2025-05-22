@@ -13,12 +13,8 @@ import {
   Node,
   useUpdateNodeInternals,
   useReactFlow,
-  NodeTypes,
-  Edge,
-  EdgeChange,
   Connection,
 } from '@xyflow/react';
-import { listen } from '@tauri-apps/api/event';
 import { getCurrentWebview } from '@tauri-apps/api/webview';
 import "@xyflow/react/dist/style.css";
 import { useDropzone, DropEvent } from 'react-dropzone';
@@ -194,6 +190,7 @@ const FlowContent: React.FC<FlowContentProps> = ({ isTauri }) => {
   const [dropError, setDropError] = useState<string | null>(null);
   const [lastDropPos, setLastDropPos] = useState<{ x: number, y: number } | null>(null);
   const unlistenRef = useRef<null | (() => void)>(null);
+  const yPos = useRef(100); // Start y position for stacking nodes
 
   // React Flow state
   const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>([]);
@@ -224,7 +221,7 @@ const FlowContent: React.FC<FlowContentProps> = ({ isTauri }) => {
     setNodes((nds) => nds.map((n) => n.id === id ? { ...n, data: { ...n.data, label: newName } } : n));
   }, [setNodes]);
 
-  // Tauri v2 drag & drop: overlay, position, and logging
+  // Tauri v2 drag & drop: overlay, position, and node creation
   useEffect(() => {
     if (!isTauri) return;
     let isMounted = true;
@@ -242,6 +239,29 @@ const FlowContent: React.FC<FlowContentProps> = ({ isTauri }) => {
           setDropError(null);
           setLastDropPos(null);
           console.log('User dropped', event.payload.paths);
+          // Add a file node for each dropped file
+          if (Array.isArray(event.payload.paths)) {
+            setNodes((nds) => {
+              let newY = yPos.current;
+              const newNodes = event.payload.paths.map((filePath: string, idx: number) => {
+                const fileName = filePath.split(/[\\/]/).pop() || filePath;
+                const node = {
+                  id: `${Date.now()}-${Math.random()}`,
+                  type: 'fileNode',
+                  data: {
+                    label: fileName,
+                    comment: 'Dokument',
+                    onDelete: handleDeleteNode,
+                    onRename: handleRenameNode
+                  },
+                  position: { x: 100, y: newY + idx * 60 },
+                };
+                return node;
+              });
+              yPos.current += newNodes.length * 60;
+              return [...nds, ...newNodes];
+            });
+          }
         } else {
           setIsDragging(false);
           setDropError(null);
@@ -258,7 +278,7 @@ const FlowContent: React.FC<FlowContentProps> = ({ isTauri }) => {
         unlistenRef.current = null;
       }
     };
-  }, [isTauri]);
+  }, [isTauri, handleDeleteNode, handleRenameNode]);
 
   // react-dropzone for browser
   const onDropAccepted = useCallback((acceptedFiles: File[], event: DropEvent) => {
