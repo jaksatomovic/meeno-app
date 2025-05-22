@@ -1,6 +1,5 @@
 import { useCallback, useEffect } from "react";
 
-import SearchChat from "@/components/SearchChat";
 import platformAdapter from "@/utils/platformAdapter";
 import { useAppStore } from "@/stores/appStore";
 import { useSyncStore } from "@/hooks/useSyncStore";
@@ -8,7 +7,6 @@ import UpdateApp from "@/components/UpdateApp";
 import { useAppearanceStore } from "@/stores/appearanceStore";
 import ProjectMap from "@/components/ProjectMap";
 
-import Footer from "@/components/Common/UI/Footer";
 function MainApp() {
   const addError = useAppStore((state) => state.addError);
 
@@ -43,11 +41,6 @@ function MainApp() {
 
   return (
     <>
-      {/* <SearchChat
-        isTauri={true}
-        hideCoco={hideCoco}
-        hasModules={["search", "chat"]}
-      /> */}
       <ProjectMap isTauri={true} hideCoco={hideCoco} />
       <UpdateApp checkUpdate={checkUpdate} relaunchApp={relaunchApp} />
     </>

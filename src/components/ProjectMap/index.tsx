@@ -1,81 +1,65 @@
-import React, { useState, useCallback, useMemo } from 'react';
-import {
-  ReactFlow,
-  MiniMap,
-  Controls,
-  Background,
-  useNodesState,
-  useEdgesState,
-  addEdge,
-  Handle,
-  Position,
-} from '@xyflow/react';
-import "@xyflow/react/dist/style.css";
+import React, { useState } from 'react';
+import { FileText, Image as LucideImage } from 'lucide-react';
 import Footer from "@/components/Common/UI/Footer";
 import { ChatHeader } from "@/components/Assistant/ChatHeader";
 import HistoryList from "@/components/Common/HistoryList";
+import FlowContent from './FlowContent';
+import { ReactFlowProvider } from '@xyflow/react';
 
-// Custom node for files/documents
-function FileNode({ data }) {
+// Helper za ikonicu po tipu fajla (koristi Lucide)
+const getFileIcon = (filename: string) => {
+  if (filename.match(/\.(png|jpg|jpeg|gif)$/i)) return <LucideImage className="w-4 h-4 text-blue-400" />;
+  if (filename.endsWith('.pdf')) return <FileText className="w-4 h-4 text-red-400" />;
+  if (filename.endsWith('.docx') || filename.endsWith('.doc')) return <FileText className="w-4 h-4 text-indigo-400" />;
+  return <FileText className="w-4 h-4 text-gray-400" />;
+};
+
+// Tooltip komponenta
+const Tooltip = ({ text }: { text: string }) => (
+  <div className="absolute left-1/2 -translate-x-1/2 -top-8 bg-black/80 text-white text-xs rounded-xl px-3 py-1 z-50 shadow-lg whitespace-nowrap pointer-events-none opacity-90">
+    {text}
+  </div>
+);
+
+// Custom context menu
+function NodeContextMenu({ x, y, onRename, onDelete, onClose, wrapperRef }: { x: number, y: number, onRename: () => void, onDelete: () => void, onClose: () => void, wrapperRef: React.RefObject<HTMLDivElement> }) {
+  // Zatvori na klik van menija ili na Escape
+  React.useEffect(() => {
+    const handle = (e: MouseEvent | KeyboardEvent) => {
+      if (e instanceof KeyboardEvent && e.key === 'Escape') onClose();
+      if (e instanceof MouseEvent) {
+        const menu = document.getElementById('node-context-menu');
+        if (menu && (!(e.target instanceof HTMLElement) || !(e.target as HTMLElement).closest('#node-context-menu'))) onClose();
+      }
+    };
+    document.addEventListener('mousedown', handle);
+    document.addEventListener('keydown', handle);
+    return () => {
+      document.removeEventListener('mousedown', handle);
+      document.removeEventListener('keydown', handle);
+    };
+  }, [onClose]);
+
+  // Izračunaj poziciju relativno na wrapper
+  let style: React.CSSProperties = { left: x, top: y };
+  if (wrapperRef.current) {
+    const bounds = wrapperRef.current.getBoundingClientRect();
+    style = { left: x - bounds.left, top: y - bounds.top };
+  }
+
   return (
-    <div className="rounded-lg border border-blue-400 bg-blue-50 p-3 min-w-[120px] shadow-md">
-      <div className="font-semibold text-blue-700 truncate">{data.label}</div>
-      <div className="text-xs text-blue-500">{data.comment || 'Dokument'}</div>
-      <Handle type="target" position={Position.Top} />
-      <Handle type="source" position={Position.Bottom} />
+    <div
+      id="node-context-menu"
+      className="absolute z-[1000] bg-white dark:bg-zinc-900 border border-gray-200 dark:border-zinc-700 rounded-lg shadow-lg py-1 px-2 min-w-[120px] text-sm"
+      style={style}
+      onContextMenu={e => e.preventDefault()}
+    >
+      <button className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded" onClick={onRename}>Rename</button>
+      <button className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded text-red-500" onClick={onDelete}>Delete</button>
+      <button className="block w-full text-left px-2 py-1 hover:bg-gray-100 dark:hover:bg-zinc-800 rounded" onClick={onClose}>Close</button>
     </div>
   );
 }
-
-// Custom node for tags
-function TagNode({ data }) {
-  return (
-    <div className="rounded-full border border-green-400 bg-green-50 px-4 py-1 shadow text-green-700 text-xs font-medium">
-      #{data.label}
-      <Handle type="target" position={Position.Left} />
-      <Handle type="source" position={Position.Right} />
-    </div>
-  );
-}
-
-const initialNodes = [
-  {
-    id: "1",
-    type: "fileNode",
-    data: { label: "knjiga.pdf", comment: "Glavni izvor" },
-    position: { x: 250, y: 0 },
-  },
-  {
-    id: "2",
-    type: "fileNode",
-    data: { label: "slika za Poglavlje 2", comment: "Slika za poglavlje" },
-    position: { x: 100, y: 100 },
-  },
-  {
-    id: "3",
-    type: "fileNode",
-    data: { label: "beta-verzija .docx", comment: "Beta verzija dokumenta" },
-    position: { x: 400, y: 100 },
-  },
-  {
-    id: "4",
-    type: "tagNode",
-    data: { label: "istorija" },
-    position: { x: 250, y: 180 },
-  },
-  {
-    id: "5",
-    type: "tagNode",
-    data: { label: "literatura" },
-    position: { x: 100, y: 220 },
-  },
-];
-
-const initialEdges = [
-  { id: "e1-4", source: "1", target: "4" },
-  { id: "e2-5", source: "2", target: "5" },
-  { id: "e3-4", source: "3", target: "4" },
-];
 
 interface ProjectMapProps {
   isTauri: boolean;
@@ -87,14 +71,6 @@ interface ProjectMapProps {
 const ProjectMap = ({ isTauri, hideCoco, openSetting = () => { }, setWindowAlwaysOnTop = async () => { } }: ProjectMapProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
-
-  // React Flow interakcija
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const onConnect = useCallback((params: any) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
-
-  // Memoizuj nodeTypes
-  const nodeTypes = useMemo(() => ({ fileNode: FileNode, tagNode: TagNode }), []);
 
   const handleSearch = (keyword: string) => {
     console.log(keyword);
@@ -138,19 +114,9 @@ const ProjectMap = ({ isTauri, hideCoco, openSetting = () => { }, setWindowAlway
       />
       {/* Mapa */}
       <div className="flex-1 w-full overflow-hidden">
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          nodeTypes={nodeTypes}
-          fitView
-        >
-          <MiniMap />
-          <Controls />
-          <Background />
-        </ReactFlow>
+        <ReactFlowProvider>
+          <FlowContent isTauri={isTauri} />
+        </ReactFlowProvider>
       </div>
       {/* Footer na dnu */}
       <Footer

@@ -34,7 +34,8 @@
           "radius": 6
         },
         "visibleOnAllWorkspaces": true,
-        "alwaysOnTop": true
+        "alwaysOnTop": true,
+        "dragDropEnabled": true
       },
       {
         "label": "settings",
