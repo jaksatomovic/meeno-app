@@ -8,6 +8,7 @@ import UpdateApp from "@/components/UpdateApp";
 import { useAppearanceStore } from "@/stores/appearanceStore";
 import ProjectMap from "@/components/ProjectMap";
 
+import Footer from "@/components/Common/UI/Footer";
 function MainApp() {
   const addError = useAppStore((state) => state.addError);
 

@@ -1,8 +1,17 @@
-import React, { useState } from "react";
-import { ReactFlow, Background, Controls } from "@xyflow/react";
+import React, { useState, useCallback } from 'react';
+import {
+  ReactFlow,
+  MiniMap,
+  Controls,
+  Background,
+  useNodesState,
+  useEdgesState,
+  addEdge,
+} from '@xyflow/react';
 import "@xyflow/react/dist/style.css";
 import Footer from "@/components/Common/UI/Footer";
 import { ChatHeader } from "@/components/Assistant/ChatHeader";
+import HistoryList from "@/components/Common/HistoryList";
 
 const initialNodes = [
   {
@@ -44,24 +53,49 @@ interface ProjectMapProps {
   setWindowAlwaysOnTop?: (isPinned: boolean) => Promise<void>;
 }
 
-const ProjectMap = ({ isTauri, hideCoco, openSetting = () => {}, setWindowAlwaysOnTop = async () => {} }: ProjectMapProps) => {
-  // Dummy state for ChatHeader
+const ProjectMap = ({ isTauri, hideCoco, openSetting = () => { }, setWindowAlwaysOnTop = async () => { } }: ProjectMapProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isLogin, setIsLogin] = useState(false);
+
+  // React Flow interakcija
+  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const onConnect = useCallback((params: any) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+
+  const handleSearch = (keyword: string) => {
+    console.log(keyword);
+  };
 
   return (
     <div
       data-tauri-drag-region={isTauri}
       className="flex flex-col w-screen h-screen bg-white dark:bg-black overflow-hidden relative rounded-xl border border-[#E6E6E6] dark:border-[#272626]"
     >
+      {/* Sidebar */}
+      {isSidebarOpen ? (
+        <div
+          className={`fixed inset-y-0 left-0 z-50 w-64 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
+            } transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:block bg-gray-100 dark:bg-gray-800`}
+        >
+          <HistoryList
+            list={[]}
+            active={undefined}
+            onSearch={handleSearch}
+            onRefresh={() => { }}
+            onSelect={() => { }}
+            onRename={() => { }}
+            onRemove={() => { }}
+          />
+        </div>
+      ) : null}
       {/* ChatHeader na vrhu */}
       <ChatHeader
-        onCreateNewChat={() => {}}
-        onOpenChatAI={() => {}}
+        onCreateNewChat={() => { }}
+        onOpenChatAI={() => { }}
         isSidebarOpen={isSidebarOpen}
-        setIsSidebarOpen={() => setIsSidebarOpen((v) => !v)}
+        setIsSidebarOpen={() => setIsSidebarOpen((v: boolean) => !v)}
         activeChat={undefined}
-        reconnect={() => {}}
+        reconnect={() => { }}
         isLogin={isLogin}
         setIsLogin={setIsLogin}
         isChatPage={false}
@@ -70,9 +104,17 @@ const ProjectMap = ({ isTauri, hideCoco, openSetting = () => {}, setWindowAlways
       />
       {/* Mapa */}
       <div className="flex-1 w-full overflow-hidden">
-        <ReactFlow nodes={initialNodes} edges={initialEdges} fitView>
-          <Background />
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onConnect={onConnect}
+          fitView
+        >
+          <MiniMap />
           <Controls />
+          <Background />
         </ReactFlow>
       </div>
       {/* Footer na dnu */}
