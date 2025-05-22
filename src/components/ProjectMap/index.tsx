@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   ReactFlow,
   MiniMap,
@@ -7,42 +7,73 @@ import {
   useNodesState,
   useEdgesState,
   addEdge,
+  Handle,
+  Position,
 } from '@xyflow/react';
 import "@xyflow/react/dist/style.css";
 import Footer from "@/components/Common/UI/Footer";
 import { ChatHeader } from "@/components/Assistant/ChatHeader";
 import HistoryList from "@/components/Common/HistoryList";
 
+// Custom node for files/documents
+function FileNode({ data }) {
+  return (
+    <div className="rounded-lg border border-blue-400 bg-blue-50 p-3 min-w-[120px] shadow-md">
+      <div className="font-semibold text-blue-700 truncate">{data.label}</div>
+      <div className="text-xs text-blue-500">{data.comment || 'Dokument'}</div>
+      <Handle type="target" position={Position.Top} />
+      <Handle type="source" position={Position.Bottom} />
+    </div>
+  );
+}
+
+// Custom node for tags
+function TagNode({ data }) {
+  return (
+    <div className="rounded-full border border-green-400 bg-green-50 px-4 py-1 shadow text-green-700 text-xs font-medium">
+      #{data.label}
+      <Handle type="target" position={Position.Left} />
+      <Handle type="source" position={Position.Right} />
+    </div>
+  );
+}
+
 const initialNodes = [
   {
     id: "1",
-    type: "default",
-    data: { label: "knjiga.pdf" },
+    type: "fileNode",
+    data: { label: "knjiga.pdf", comment: "Glavni izvor" },
     position: { x: 250, y: 0 },
   },
   {
     id: "2",
-    type: "default",
-    data: { label: "slika za Poglavlje 2" },
+    type: "fileNode",
+    data: { label: "slika za Poglavlje 2", comment: "Slika za poglavlje" },
     position: { x: 100, y: 100 },
   },
   {
     id: "3",
-    type: "default",
-    data: { label: "beta-verzija .docx" },
+    type: "fileNode",
+    data: { label: "beta-verzija .docx", comment: "Beta verzija dokumenta" },
     position: { x: 400, y: 100 },
   },
   {
     id: "4",
-    type: "default",
-    data: { label: "koristi se u uvodu" },
-    position: { x: 250, y: 80 },
+    type: "tagNode",
+    data: { label: "istorija" },
+    position: { x: 250, y: 180 },
+  },
+  {
+    id: "5",
+    type: "tagNode",
+    data: { label: "literatura" },
+    position: { x: 100, y: 220 },
   },
 ];
 
 const initialEdges = [
   { id: "e1-4", source: "1", target: "4" },
-  { id: "e2-4", source: "2", target: "4" },
+  { id: "e2-5", source: "2", target: "5" },
   { id: "e3-4", source: "3", target: "4" },
 ];
 
@@ -61,6 +92,9 @@ const ProjectMap = ({ isTauri, hideCoco, openSetting = () => { }, setWindowAlway
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const onConnect = useCallback((params: any) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+
+  // Memoizuj nodeTypes
+  const nodeTypes = useMemo(() => ({ fileNode: FileNode, tagNode: TagNode }), []);
 
   const handleSearch = (keyword: string) => {
     console.log(keyword);
@@ -110,6 +144,7 @@ const ProjectMap = ({ isTauri, hideCoco, openSetting = () => { }, setWindowAlway
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          nodeTypes={nodeTypes}
           fitView
         >
           <MiniMap />
