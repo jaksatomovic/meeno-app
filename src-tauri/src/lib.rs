@@ -63,7 +63,7 @@ struct Payload {
 pub fn run() {
     let ctx = tauri::generate_context!();
 
-    let mut app_builder = tauri::Builder::default();
+    let mut app_builder = tauri::Builder::default().plugin(tauri_plugin_notification::init());
 
     #[cfg(desktop)]
     {

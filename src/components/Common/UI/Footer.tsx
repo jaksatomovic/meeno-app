@@ -21,12 +21,14 @@ interface FooterProps {
   isTauri: boolean;
   openSetting: () => void;
   setWindowAlwaysOnTop: (isPinned: boolean) => Promise<void>;
+  absolute?: boolean;
 }
 
 export default function Footer({
   isTauri,
   openSetting,
   setWindowAlwaysOnTop,
+  absolute = true,
 }: FooterProps) {
   const { t } = useTranslation();
   const sourceData = useSearchStore((state) => state.sourceData);
@@ -55,7 +57,11 @@ export default function Footer({
   return (
     <div
       data-tauri-drag-region={isTauri}
-      className="px-4 z-999 mx-[1px] h-8 absolute bottom-0 left-0 right-0 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between rounded-md rounded-t-none overflow-hidden"
+      className={clsx(
+        "px-4 z-999 mx-[1px] h-8",
+        absolute ? "absolute bottom-0 left-0 right-0" : "",
+        "border-t border-gray-200 dark:border-gray-700 flex items-center justify-between rounded-md rounded-t-none overflow-hidden"
+      )}
     >
       {isTauri ? (
         <div className="flex items-center">

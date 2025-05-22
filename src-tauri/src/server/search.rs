@@ -45,7 +45,7 @@ impl DocumentsSizedCollector {
         }
     }
 
-    fn documents(self) -> impl ExactSizeIterator<Item=Document> {
+    fn documents(self) -> impl ExactSizeIterator<Item = Document> {
         self.docs.into_iter().map(|(_, doc, _)| doc)
     }
 
@@ -101,11 +101,7 @@ impl SearchSource for CocoSearchSource {
             query_args.insert(key, JsonValue::String(value));
         }
 
-        let response = HttpClient::get(
-            &self.server.id,
-            &url,
-            Some(query_args),
-        )
+        let response = HttpClient::get(&self.server.id, &url, Some(query_args))
             .await
             .map_err(|e| SearchError::HttpError(format!("Error to send search request: {}", e)))?;
 
@@ -115,8 +111,10 @@ impl SearchSource for CocoSearchSource {
             .map_err(|e| SearchError::ParseError(format!("Failed to read response body: {}", e)))?;
 
         // Parse the search response from the body text
-        let parsed: SearchResponse<Document> = serde_json::from_str(&response_body)
-            .map_err(|e| SearchError::ParseError(format!("Failed to parse search response: {}", e)))?;
+        let parsed: SearchResponse<Document> =
+            serde_json::from_str(&response_body).map_err(|e| {
+                SearchError::ParseError(format!("Failed to parse search response: {}", e))
+            })?;
 
         // Process the parsed response
         let total_hits = parsed.hits.total.value as usize;

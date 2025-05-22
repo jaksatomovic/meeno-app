@@ -27,8 +27,8 @@ pub async fn transcription(
         Some(query_params),
         None,
     )
-        .await
-        .map_err(|e| format!("Error sending transcription request: {}", e))?;
+    .await
+    .map_err(|e| format!("Error sending transcription request: {}", e))?;
 
     // Use get_response_body_text to extract the response body as text
     let response_body = get_response_body_text(response)

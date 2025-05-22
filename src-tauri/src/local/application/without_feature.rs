@@ -1,11 +1,11 @@
+use super::AppEntry;
+use super::AppMetadata;
 use crate::common::error::SearchError;
 use crate::common::search::{QueryResponse, QuerySource, SearchQuery};
 use crate::common::traits::SearchSource;
 use crate::local::LOCAL_QUERY_SOURCE_TYPE;
 use async_trait::async_trait;
 use tauri::{AppHandle, Runtime};
-use super::AppEntry;
-use super::AppMetadata;
 
 pub(crate) const QUERYSOURCE_ID_DATASOURCE_ID_DATASOURCE_NAME: &str = "Applications";
 
@@ -102,7 +102,6 @@ pub async fn get_app_search_path<R: Runtime>(_tauri_app_handle: AppHandle<R>) ->
     // Return an empty list
     Vec::new()
 }
-
 
 #[tauri::command]
 pub async fn get_app_list<R: Runtime>(

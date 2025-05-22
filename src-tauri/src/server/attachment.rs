@@ -119,7 +119,7 @@ pub async fn get_attachment(
         .map_err(|e| format!("Request error: {}", e))?;
 
     let body = get_response_body_text(response).await?;
-    
+
     serde_json::from_str::<GetAttachmentResponse>(&body)
         .map_err(|e| format!("Failed to parse attachment response: {}", e))
 }

@@ -6,6 +6,7 @@ import { useAppStore } from "@/stores/appStore";
 import { useSyncStore } from "@/hooks/useSyncStore";
 import UpdateApp from "@/components/UpdateApp";
 import { useAppearanceStore } from "@/stores/appearanceStore";
+import ProjectMap from "@/components/ProjectMap";
 
 function MainApp() {
   const addError = useAppStore((state) => state.addError);
@@ -41,11 +42,12 @@ function MainApp() {
 
   return (
     <>
-      <SearchChat
+      {/* <SearchChat
         isTauri={true}
         hideCoco={hideCoco}
         hasModules={["search", "chat"]}
-      />
+      /> */}
+      <ProjectMap isTauri={true} hideCoco={hideCoco} />
       <UpdateApp checkUpdate={checkUpdate} relaunchApp={relaunchApp} />
     </>
   );

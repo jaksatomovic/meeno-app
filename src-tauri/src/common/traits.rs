@@ -10,4 +10,3 @@ pub trait SearchSource: Send + Sync {
 
     async fn search(&self, query: SearchQuery) -> Result<QueryResponse, SearchError>;
 }
-

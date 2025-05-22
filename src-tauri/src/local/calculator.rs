@@ -116,7 +116,7 @@ impl SearchSource for CalculatorSource {
             });
         };
 
-        // Trim the leading and tailing whitespace so that our later if condition 
+        // Trim the leading and tailing whitespace so that our later if condition
         // will only be evaluated against non-whitespace characters.
         let query_string = query_string.trim();
 
