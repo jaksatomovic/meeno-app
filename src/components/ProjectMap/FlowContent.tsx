@@ -183,9 +183,10 @@ interface CustomNode extends Node {
 
 interface FlowContentProps {
   isTauri: boolean;
+  onNodeSelect?: (node: any) => void;
 }
 
-const FlowContent: React.FC<FlowContentProps> = ({ isTauri }) => {
+const FlowContent: React.FC<FlowContentProps> = ({ isTauri, onNodeSelect }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [dropError, setDropError] = useState<string | null>(null);
   const [lastDropPos, setLastDropPos] = useState<{ x: number, y: number } | null>(null);
@@ -372,6 +373,10 @@ const FlowContent: React.FC<FlowContentProps> = ({ isTauri }) => {
     handleRenameNode(node.id);
   }, [handleRenameNode]);
 
+  const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
+    onNodeSelect?.(node);
+  }, [onNodeSelect]);
+
   return (
     <div className="h-full w-full relative" {...getRootProps()}>
       <input {...getInputProps()} />
@@ -382,9 +387,8 @@ const FlowContent: React.FC<FlowContentProps> = ({ isTauri }) => {
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         nodeTypes={nodeTypes}
+        onNodeClick={onNodeClick}
         fitView
-        onNodeDoubleClick={onNodeDoubleClick}
-        onPaneContextMenu={onPaneContextMenu}
       >
         <Background />
         <Controls />

@@ -97,7 +97,7 @@ export function ChatHeader({
 
         <AssistantList assistantIDs={assistantIDs} />
 
-        {showChatHistory ? (
+        {/* {showChatHistory ? (
           <button
             onClick={onCreateNewChat}
             className="p-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
@@ -106,7 +106,7 @@ export function ChatHeader({
               <MessageSquarePlus className="h-4 w-4 relative top-0.5" />
             </VisibleKey>
           </button>
-        ) : null}
+        ) : null} */}
       </div>
 
       <h2 className="max-w-[calc(100%-200px)] text-sm font-medium text-gray-900 dark:text-gray-100 truncate">

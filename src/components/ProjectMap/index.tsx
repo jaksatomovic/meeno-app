@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { FileText, Image as LucideImage } from 'lucide-react';
 import Footer from "@/components/Common/UI/Footer";
 import { ChatHeader } from "@/components/Assistant/ChatHeader";
 import HistoryList from "@/components/Common/HistoryList";
 import FlowContent from './FlowContent';
 import { ReactFlowProvider } from '@xyflow/react';
+import { useWindows } from "@/hooks/useWindows";
+import NodeDetailsSidebar from './NodeDetailsSidebar';
 
 // Helper za ikonicu po tipu fajla (koristi Lucide)
 const getFileIcon = (filename: string) => {
@@ -70,18 +72,51 @@ interface ProjectMapProps {
 
 const ProjectMap = ({ isTauri, hideCoco, openSetting = () => { }, setWindowAlwaysOnTop = async () => { } }: ProjectMapProps) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isNodeDetailsOpen, setIsNodeDetailsOpen] = useState(false);
+  const [selectedNode, setSelectedNode] = useState<any>(null);
   const [isLogin, setIsLogin] = useState(false);
 
   const handleSearch = (keyword: string) => {
     console.log(keyword);
   };
 
+  const handleNodeSelect = useCallback((node: any) => {
+    setSelectedNode(node);
+    setIsNodeDetailsOpen(true);
+  }, []);
+
+  const handleNodeDetailsClose = useCallback(() => {
+    setIsNodeDetailsOpen(false);
+    setSelectedNode(null);
+  }, []);
+
+  const { createWin } = useWindows();
+  const openChatAI = useCallback(() => {
+    if (isTauri) {
+      createWin({
+        label: "chat",
+        title: "Coco Chat",
+        dragDropEnabled: true,
+        center: true,
+        width: 1000,
+        height: 800,
+        minWidth: 1000,
+        minHeight: 800,
+        alwaysOnTop: false,
+        skipTaskbar: false,
+        decorations: true,
+        closable: true,
+        url: "/ui/chat",
+      });
+    }
+  }, [isTauri, createWin]);
+
   return (
     <div
       data-tauri-drag-region={isTauri}
       className="flex flex-col w-screen h-screen bg-white dark:bg-black overflow-hidden relative rounded-xl border border-[#E6E6E6] dark:border-[#272626]"
     >
-      {/* Sidebar */}
+      {/* Left Sidebar */}
       {isSidebarOpen ? (
         <div
           className={`fixed inset-y-0 left-0 z-50 w-64 transform ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"
@@ -98,10 +133,18 @@ const ProjectMap = ({ isTauri, hideCoco, openSetting = () => { }, setWindowAlway
           />
         </div>
       ) : null}
+
+      {/* Right Sidebar - Node Details */}
+      <NodeDetailsSidebar
+        isOpen={isNodeDetailsOpen}
+        onClose={handleNodeDetailsClose}
+        nodeData={selectedNode}
+      />
+
       {/* ChatHeader na vrhu */}
       <ChatHeader
         onCreateNewChat={() => { }}
-        onOpenChatAI={() => { }}
+        onOpenChatAI={openChatAI}
         isSidebarOpen={isSidebarOpen}
         setIsSidebarOpen={() => setIsSidebarOpen((v: boolean) => !v)}
         activeChat={undefined}
@@ -112,12 +155,17 @@ const ProjectMap = ({ isTauri, hideCoco, openSetting = () => { }, setWindowAlway
         showChatHistory={true}
         assistantIDs={[]}
       />
+
       {/* Mapa */}
       <div className="flex-1 w-full overflow-hidden">
         <ReactFlowProvider>
-          <FlowContent isTauri={isTauri} />
+          <FlowContent 
+            isTauri={isTauri} 
+            onNodeSelect={handleNodeSelect}
+          />
         </ReactFlowProvider>
       </div>
+
       {/* Footer na dnu */}
       <Footer
         isTauri={isTauri}
